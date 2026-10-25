@@ -314,7 +314,7 @@ express-gateway-6a1-m9   1/1    <span class="t-ok">Running</span>
       <div class="mail-head">
         <div class="ns">namespace: inbox</div>
         <h2>Email me</h2>
-        <p>Write a short note and it opens in your email app, ready to send to Anurag.</p>
+        <p>Write a short note and it goes straight to Anurag’s inbox.</p>
       </div>
       <form id="mailform" novalidate>
         <div class="row2">
@@ -466,7 +466,7 @@ const links=[...document.querySelectorAll('nav ul a')];
 (() => {
   // 1) Get a free access key at https://web3forms.com using anuragmani.sonkar87@gmail.com
   // 2) Paste it below in place of YOUR_ACCESS_KEY
-  const ACCESS_KEY = 'YOUR_ACCESS_KEY';
+  const ACCESS_KEY = '36b10a52-ab7d-4ac3-9efa-9f2317e44c86';
   const $=id=>document.getElementById(id);
   const form=$('mailform'), name=$('m-name'), from=$('m-from'), topic=$('m-topic'), msg=$('m-msg'), send=$('m-send'), note=$('m-note');
   const valid=()=>{
@@ -482,7 +482,7 @@ const links=[...document.querySelectorAll('nav ul a')];
     send.disabled=true; send.textContent='Sending...'; note.classList.remove('err'); note.textContent='';
     try{
       const res=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
-        body:JSON.stringify({access_key:36b10a52-ab7d-4ac3-9efa-9f2317e44c86,subject:`Portfolio: ${topic.value} from ${name.value.trim()}`,from_name:'Portfolio website',
+        body:JSON.stringify({access_key:ACCESS_KEY,subject:`Portfolio: ${topic.value} from ${name.value.trim()}`,from_name:'Portfolio website',
           name:name.value.trim(),email:from.value.trim(),topic:topic.value,message:msg.value.trim()})});
       const data=await res.json();
       if(!data.success) throw new Error(data.message||'Send failed');
