@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Anurag Mani Sonkar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: control-plane console — left narrative column, right live cluster terminal; sections stack as "namespaces" */
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --ink:#0f1a2e; --muted:#56627a; --line:#d5dbe6;
+  --accent:#2747d6; --accent-soft:#e3e8fc; --amber:#c27a00; --ok:#11845b;
+  --term-bg:#0d1526; --term-fg:#c9d4ee; --term-dim:#6d7a99;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a1020; --surface:#111a2f; --ink:#e7ecf8; --muted:#97a3bf; --line:#22304d;
+  --accent:#7d94ff; --accent-soft:#1a2550; --amber:#f0b34a; --ok:#3ccf91;
+  --term-bg:#060b17; --term-fg:#c9d4ee; --term-dim:#5f6c8c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1020; --surface:#111a2f; --ink:#e7ecf8; --muted:#97a3bf; --line:#22304d;
+  --accent:#7d94ff; --accent-soft:#1a2550; --amber:#f0b34a; --ok:#3ccf91;
+  --term-bg:#060b17; --term-fg:#c9d4ee; --term-dim:#5f6c8c; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1120px;margin:0 auto}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.mono{font-family:var(--f-mono)}
+
+/* nav */
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)))}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px max(16px,env(safe-area-inset-left,0px))}
+.logo{font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--ink);text-decoration:none}
+.logo span{color:var(--accent)}
+nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;font-size:14px}
+nav ul a{color:var(--muted);text-decoration:none;font-weight:500}
+nav ul a:hover,nav ul a.on{color:var(--ink)}
+@media (max-width:720px){nav ul{display:none}}
+.status{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;color:var(--ok)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding-block:64px 56px}
+.hero>*{min-width:0}
+@media (max-width:900px){.hero{grid-template-columns:1fr;padding-block:40px}}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hero h1{font-family:var(--f-display);font-weight:800;font-size:clamp(38px,6.4vw,74px);line-height:.98;letter-spacing:-.02em;margin-top:14px}
+.hero h1 .last{color:var(--accent)}
+.role{font-family:var(--f-mono);font-size:clamp(15px,2vw,18px);margin-top:20px;min-height:1.6em;color:var(--ink)}
+.role .caret{display:inline-block;width:9px;height:1.1em;background:var(--accent);vertical-align:-3px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.lede{color:var(--muted);max-width:56ch;margin-top:18px;font-size:17px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{font:600 14px var(--f-body);padding:12px 20px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);text-decoration:none;cursor:pointer;transition:transform .15s}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:hover{transform:translateY(-2px)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:26px;font-size:14px;color:var(--muted)}
+
+/* terminal */
+.term{background:var(--term-bg);color:var(--term-fg);border-radius:14px;font-family:var(--f-mono);font-size:12.5px;line-height:1.75;
+  box-shadow:0 30px 60px -30px rgba(10,20,50,.55);overflow:hidden}
+.term-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.07);color:var(--term-dim);font-size:11.5px}
+.term-bar i{width:10px;height:10px;border-radius:50%;background:#334066;display:block}
+.term-bar b{margin-left:auto;font-weight:400}
+.term-body{padding:16px 18px;min-height:330px;overflow-x:auto;white-space:pre}
+.t-p{color:#7d94ff}.t-ok{color:#3ccf91}.t-w{color:#f0b34a}.t-d{color:var(--term-dim)}
+.envs{display:flex;gap:6px;padding:0 18px 16px;flex-wrap:wrap}
+.env{flex:1;min-width:80px;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--term-dim);transition:all .4s}
+.env strong{display:block;color:var(--term-fg);font-weight:600;font-size:12px}
+.env.live{border-color:#3ccf91;color:#3ccf91;background:rgba(60,207,145,.07)}
+
+/* sections */
+section{padding-block:72px;border-top:1px solid var(--line)}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:36px}
+.sec-head h2{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,3.6vw,40px);letter-spacing:-.01em}
+.sec-head p{color:var(--muted);max-width:46ch;margin:0}
+.ns{font-family:var(--f-mono);font-size:12px;color:var(--accent);margin-bottom:10px}
+
+.reveal{transform:translateY(14px);transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{transform:none}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+@media (max-width:820px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{padding:28px 24px;border-right:1px solid var(--line)}
+.metric:last-child{border-right:0}
+@media (max-width:820px){.metric:nth-child(2){border-right:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.metric .n{font-family:var(--f-display);font-weight:700;font-size:clamp(32px,4.4vw,48px);font-variant-numeric:tabular-nums;line-height:1}
+.metric .n small{font-size:.5em;color:var(--accent);margin-left:2px}
+.metric p{margin:12px 0 0;color:var(--muted);font-size:14px}
+.metric .src{font-family:var(--f-mono);font-size:11px;color:var(--muted);opacity:.8;margin-top:8px}
+
+/* experience */
+.xp{display:grid;grid-template-columns:260px 1fr;gap:32px}
+.xp>*{min-width:0}
+@media (max-width:820px){.xp{grid-template-columns:1fr;gap:20px}}
+.tabs{display:flex;flex-direction:column;gap:4px;border-left:2px solid var(--line)}
+@media (max-width:820px){.tabs{flex-direction:row;overflow-x:auto;border-left:0;border-bottom:2px solid var(--line);padding-bottom:2px}}
+.tab{all:unset;cursor:pointer;padding:12px 16px;margin-left:-2px;border-left:2px solid transparent;font-size:14px;color:var(--muted);transition:all .2s;white-space:nowrap}
+.tab small{display:block;font-family:var(--f-mono);font-size:11px;opacity:.8}
+.tab:hover{color:var(--ink);background:var(--accent-soft)}
+.tab[aria-selected="true"]{color:var(--ink);border-left-color:var(--accent);font-weight:600;background:var(--accent-soft)}
+@media (max-width:820px){.tab{margin:0 0 -4px;border-left:0;border-bottom:2px solid transparent}.tab[aria-selected="true"]{border-bottom-color:var(--accent)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 30px}
+@media (max-width:560px){.panel{padding:22px 20px}}
+.panel h3{font-family:var(--f-display);font-size:22px;font-weight:700}
+.panel .co{color:var(--accent)}
+.panel .when{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:6px}
+.panel ul{margin:20px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.panel li{padding-left:22px;position:relative;color:var(--ink)}
+.panel li::before{content:"›";position:absolute;left:4px;color:var(--accent);font-weight:700}
+.panel li b{color:var(--accent);font-weight:600}
+.panel-in{animation:fadeup .45s ease}
+@keyframes fadeup{from{opacity:.2;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* timeline strip */
+.strip{margin-top:40px;overflow-x:auto}
+.strip svg{display:block;min-width:640px;width:100%}
+
+/* skills */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.chip-btn{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;transition:all .2s}
+.chip-btn:hover{color:var(--ink)}
+.chip-btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.sk{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;transition:opacity .3s,transform .3s}
+.sk.dim{opacity:.25;transform:scale(.98)}
+.sk h3{font-size:13px;font-family:var(--f-mono);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.tag{font-size:13px;padding:4px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--line);transition:all .2s}
+.tag:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+
+/* industries */
+.inds{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+@media (max-width:820px){.inds{grid-template-columns:1fr 1fr}}
+.ind{padding:22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0}
+.ind strong{display:block;font-family:var(--f-display);font-size:15px;font-weight:700}
+.ind span{font-size:13px;color:var(--muted)}
+
+/* edu */
+.edu{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media (max-width:700px){.edu{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card strong{display:block;margin-top:6px;font-size:17px}
+.card span{color:var(--muted);font-size:14px}
+
+/* contact */
+.contact{background:var(--ink);color:var(--bg);border-radius:20px;padding:clamp(28px,5vw,56px);display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center}
+.contact>*{min-width:0}
+@media (max-width:820px){.contact{grid-template-columns:1fr}}
+.contact h2{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4.4vw,48px);line-height:1.05}
+.contact p{opacity:.75;margin:14px 0 0}
+.lines{display:grid;gap:10px}
+.line{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid color-mix(in srgb,var(--bg) 22%,transparent);border-radius:12px;padding:14px 16px}
+.line div{min-width:0}
+.line .k{font-family:var(--f-mono);font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.1em}
+.line .v{font-family:var(--f-mono);font-size:14px;user-select:all;overflow-wrap:anywhere}
+.copy{font:600 12px var(--f-body);border:0;border-radius:999px;padding:8px 14px;background:var(--bg);color:var(--ink);cursor:pointer;flex:none}
+.mail{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(24px,4vw,44px)}
+.mail>*{min-width:0}
+@media (max-width:820px){.mail{grid-template-columns:1fr;gap:24px}}
+.mail h2{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,3.6vw,40px)}
+.mail-head p{color:var(--muted);margin:12px 0 0}
+#mailform{display:grid;gap:16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+#mailform label{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+#mailform input,#mailform select,#mailform textarea{font:400 15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;transition:border-color .2s,box-shadow .2s}
+#mailform textarea{resize:vertical;min-height:120px}
+#mailform input:focus,#mailform select:focus,#mailform textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#mailform .bad{border-color:#d4483b}
+.mail-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.m-note{font-family:var(--f-mono);font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.m-note.err{color:#d4483b}
+footer{padding-block:32px 40px;color:var(--muted);font-size:13px;font-family:var(--f-mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{transform:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top">AMS<span>.</span></a>
+    <ul>
+      <li><a href="#impact">Impact</a></li>
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="#email">Email me</a></li>
+    </ul>
+    <span class="status"><span class="dot"></span>open to opportunities</span>
+  </div>
+</nav>
+
+<div class="wrap" id="top">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Mumbai, India · 14+ years in production</div>
+      <h1>Anurag Mani<br><span class="last">Sonkar</span></h1>
+      <div class="role" aria-live="polite"><span id="role">Technical Consultant, Cloud &amp; OpenShift</span><span class="caret"></span></div>
+      <p class="lede">I help banks, fintechs, government teams and digital media companies move their systems to the cloud and keep them fast and reliable. I turn business needs into clear technical plans and guide teams from design all the way to production.</p>
+      <div class="cta">
+        <a class="btn" href="#experience">See my work</a>
+        <a class="btn ghost" href="#contact">Get in touch</a>
+      </div>
+      <div class="meta">
+        <span>Java · Spring Boot</span><span>AWS · Azure</span><span>Kubernetes · OpenShift</span><span>Kafka · GitOps</span>
+      </div>
+    </div>
+
+    <div class="term" aria-label="Animated deployment console">
+      <div class="term-bar"><i></i><i></i><i></i><b>anurag@rosa-cluster ~ adobe-express</b></div>
+      <div class="term-body" id="term"><span class="t-p">$</span> oc login --server=rosa.prod
+<span class="t-ok">Logged in</span> as anurag (cluster-admin)
+<span class="t-p">$</span> argocd app sync express-module --env prod
+<span class="t-d">Syncing manifests from git... helm chart v4.2.0</span>
+<span class="t-p">$</span> oc get pods -n express-prod
+NAME                     READY  STATUS
+express-api-7d9f-x2k     1/1    <span class="t-ok">Running</span>
+express-worker-5c8b-q1   1/1    <span class="t-ok">Running</span>
+express-gateway-6a1-m9   1/1    <span class="t-ok">Running</span>
+<span class="t-ok">✓ CPF → ROSA migration healthy · 99.9% uptime</span></div>
+      <div class="envs">
+        <div class="env live" data-env="0"><strong>QA</strong>validated</div>
+        <div class="env live" data-env="1"><strong>Stage</strong>regression ok</div>
+        <div class="env live" data-env="2"><strong>Production</strong>live</div>
+      </div>
+    </div>
+  </header>
+
+  <section id="impact">
+    <div class="sec-head reveal">
+      <div><div class="ns">namespace: impact</div><h2>Results that shipped</h2></div>
+      <p>Numbers from real production systems used by banks, regulators and millions of end users.</p>
+    </div>
+    <div class="metrics reveal">
+      <div class="metric"><div class="n"><span data-count="40">40</span><small>%</small></div><p>Faster API responses on the Banker’s Almanac API suite</p><div class="src">LexisNexis</div></div>
+      <div class="metric"><div class="n"><span data-count="50">50</span><small>%</small></div><p>Lower query latency using CQRS data patterns</p><div class="src">LexisNexis</div></div>
+      <div class="metric"><div class="n"><span data-count="99.9" data-dec="1">99.9</span><small>%</small></div><p>Service availability on fault-tolerant AWS ECS microservices</p><div class="src">LexisNexis</div></div>
+      <div class="metric"><div class="n"><span data-count="40">40</span><small>%</small></div><p>Less manual work through automated workflows and CI/CD</p><div class="src">LTI · MCA</div></div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <div class="sec-head reveal">
+      <div><div class="ns">namespace: experience</div><h2>Where I’ve worked</h2></div>
+      <p>Five companies, one thread: making large, business-critical systems faster, safer and easier to run.</p>
+    </div>
+    <div class="xp reveal">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="panel" role="tabpanel" id="panel"></div>
+    </div>
+    <div class="strip reveal" aria-hidden="true">
+      <svg viewBox="0 0 1000 90" id="strip"></svg>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="sec-head reveal">
+      <div><div class="ns">namespace: skills</div><h2>Tech stack</h2></div>
+      <p>Tap a filter to highlight one area. Everything here has been used in production.</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="skills" id="skillgrid"></div>
+  </section>
+
+  <section id="industries">
+    <div class="sec-head reveal">
+      <div><div class="ns">namespace: domains</div><h2>Industries served</h2></div>
+    </div>
+    <div class="inds reveal">
+      <div class="ind"><strong>Banking</strong><span>SBI loan life cycle</span></div>
+      <div class="ind"><strong>Risk &amp; KYC/AML</strong><span>Banker’s Almanac, KYCKR</span></div>
+      <div class="ind"><strong>Government</strong><span>MCA, BARC</span></div>
+      <div class="ind"><strong>Digital Media</strong><span>Adobe Express</span></div>
+      <div class="ind"><strong>Financial Services</strong><span>Compliance data</span></div>
+    </div>
+    <div class="edu reveal">
+      <div class="card"><div class="k">Education</div><strong>B.Tech, Computer Science &amp; Engineering</strong><span>BMAS Engineering College, Agra · UPTU · 2011</span></div>
+      <div class="card"><div class="k">Certification</div><strong>DevOps Certified Professional Associate</strong><span>Saidemy IT Training Institute</span></div>
+    </div>
+  </section>
+
+  <section id="contact" style="border-top:0">
+    <div class="contact reveal">
+      <div>
+        <h2>Let’s build something reliable.</h2>
+        <p>Open to Technical Consultant, Engineering Lead and Cloud Architect roles, remote or in Mumbai.</p>
+      </div>
+      <div class="lines">
+        <div class="line"><div><div class="k">Email</div><div class="v" id="em">anuragmani.sonkar87@gmail.com</div></div><button class="copy" data-copy="em">Copy</button></div>
+        <div class="line"><div><div class="k">Phone</div><div class="v" id="ph">+91 9004693212</div></div><button class="copy" data-copy="ph">Copy</button></div>
+        <div class="line"><div><div class="k">Location</div><div class="v">Mumbai, India</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="email" style="border-top:0;padding-top:24px">
+    <div class="mail reveal">
+      <div class="mail-head">
+        <div class="ns">namespace: inbox</div>
+        <h2>Email me</h2>
+        <p>Write a short note and it opens in your email app, ready to send to Anurag.</p>
+      </div>
+      <form id="mailform" novalidate>
+        <div class="row2">
+          <label>Your name<input id="m-name" type="text" autocomplete="name" placeholder="Priya Sharma"></label>
+          <label>Your email<input id="m-from" type="email" autocomplete="email" placeholder="priya@company.com"></label>
+        </div>
+        <label>Topic
+          <select id="m-topic">
+            <option>Job opportunity</option>
+            <option>Consulting project</option>
+            <option>Interview request</option>
+            <option>Just saying hello</option>
+          </select>
+        </label>
+        <label>Message<textarea id="m-msg" rows="5" placeholder="Hi Anurag, we have a Cloud Architect role in Mumbai and would like to talk..."></textarea></label>
+        <div class="mail-actions">
+          <button type="submit" class="btn" id="m-send">Send message</button>
+          <span class="m-note" id="m-note" aria-live="polite">Goes straight to Anurag’s inbox</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <footer><span>© 2026 Anurag Mani Sonkar</span><span>deployed via GitOps · all pods healthy</span></footer>
+</div>
+
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* rotating role */
+(() => {
+  const roles = ["Technical Consultant, Cloud & OpenShift","Principal Software Engineer","Microservices Architect","Java & Spring Boot Lead","Cloud Migration Specialist"];
+  const el = document.getElementById('role'); if (reduce) return;
+  let r = 0, i = roles[0].length, del = true;
+  setTimeout(function tick(){
+    if (del){ i--; if (i<=0){ i=0; del=false; r=(r+1)%roles.length; } }
+    else { i++; }
+    el.textContent = roles[r].slice(0,i);
+    if (!del && i===roles[r].length){ del=true; return setTimeout(tick,2200); }
+    setTimeout(tick, del?28:55);
+  }, 2600);
+})();
+
+/* terminal replay */
+(() => {
+  const term = document.getElementById('term'); if (reduce) return;
+  const lines = term.innerHTML.split('\n');
+  const envs = [...document.querySelectorAll('.env')];
+  async function play(){
+    envs.forEach(e=>{e.classList.remove('live');});
+    term.innerHTML='';
+    for (let k=0;k<lines.length;k++){
+      term.innerHTML += (k?'\n':'') + lines[k];
+      if (k===4) envs[0].classList.add('live');
+      if (k===7) envs[1].classList.add('live');
+      if (k===9) envs[2].classList.add('live');
+      await new Promise(r=>setTimeout(r, lines[k].includes('$') ? 650 : 260));
+    }
+    setTimeout(play, 7000);
+  }
+  setTimeout(play, 3500);
+})();
+
+/* experience */
+const jobs = [
+  {co:"Insight Global",role:"Technical Consultant, Cloud & OpenShift",when:"Feb 2026 – Oct 2026 · Client: Adobe (Adobe Express)",short:"2026",pts:[
+    "Led technical delivery of cloud migration for several <b>Adobe Express</b> modules, moving them from AWS-based CPF to <b>ROSA</b> (Red Hat OpenShift on AWS).",
+    "Planned and ran deployments across QA, Stage and Production with <b>OpenShift, Kubernetes, Helm, Argo CD</b> and <b>Argo Workflows</b>.",
+    "Advised teams on Kubernetes setup: namespaces, storage, quotas, <b>RBAC</b> and networking, so releases stayed stable.",
+    "Set up <b>GitOps CI/CD</b> pipelines and fixed runtime issues using Splunk, Kubernetes logs and AWS tools.",
+    "Linked dev, DevOps, platform and infra teams to clear blockers and sign off on <b>production readiness</b>."]},
+  {co:"LexisNexis Risk Solutions",role:"Principal Software Engineer",when:"Nov 2022 – Jan 2026 · Finance, Risk, KYC/AML",short:"2022",pts:[
+    "Architected the <b>Banker’s Almanac</b> platform that banks use for risk checks, KYC, AML and compliance, lifting performance by <b>35%</b>.",
+    "Scaled the Banker’s Almanac API suite, making responses <b>40% faster</b>.",
+    "Used <b>CQRS</b> patterns to cut query latency by <b>50%</b>.",
+    "Built fault-tolerant AWS ECS microservices with <b>99.9% availability</b> and <b>30%</b> more throughput.",
+    "Integrated <b>KYCKR</b> into compliance workflows to speed up due diligence."]},
+  {co:"LTI",role:"Specialist Software Engineer",when:"Jan 2019 – Aug 2022 · Banking, Digital, Government",short:"2019",pts:[
+    "Turned the <b>Ministry of Corporate Affairs</b> legacy monolith into <b>Kafka</b> event-driven microservices.",
+    "Automated workflows and CI/CD, cutting manual work by <b>40%</b>.",
+    "Built and deployed Java microservices on <b>AWS EKS</b> with Jenkins and Docker.",
+    "Mentored teams and improved resilience using Lambda, caching, CloudWatch, X-Ray and Sentry."]},
+  {co:"Mphasis",role:"Delivery Software Engineer",when:"Jul 2015 – Dec 2018 · Banking, Loan Management",short:"2015",pts:[
+    "Delivered end-to-end features for <b>SBI’s Loan Life Cycle Management System</b>, from pre-sanction to post-sanction.",
+    "Designed components for high-volume customer, loan and transaction data.",
+    "Worked with bank stakeholders, analysts and QA across Agile releases."]},
+  {co:"CMC Limited",role:"Software Engineer",when:"Jul 2012 – Jun 2015 · Government, Accounting",short:"2012",pts:[
+    "Built accounting and document modules for <b>BARC’s AAIIS</b> platform: budgets, bills, receipts and payments.",
+    "Did requirement analysis with the client and wrote HLD, LLD and BRD documents using <b>Spring MVC</b>."]}
+];
+const tabs = document.getElementById('tabs'), panel = document.getElementById('panel');
+function show(i){
+  [...tabs.children].forEach((t,k)=>t.setAttribute('aria-selected',k===i));
+  const j = jobs[i];
+  panel.innerHTML = `<div class="panel-in"><h3>${j.role} <span class="co">@ ${j.co}</span></h3><div class="when">${j.when}</div><ul>${j.pts.map(p=>`<li>${p}</li>`).join('')}</ul></div>`;
+  document.querySelectorAll('#strip .node').forEach((n,k)=>n.setAttribute('r',k===i?9:6));
+}
+jobs.forEach((j,i)=>{
+  const b=document.createElement('button'); b.className='tab'; b.role='tab'; b.id='tab-'+i;
+  b.innerHTML=`${j.co}<small>${j.when.split(' · ')[0]}</small>`;
+  b.onclick=()=>show(i); tabs.appendChild(b);
+});
+
+/* timeline strip: 2012 → 2026 to scale */
+(() => {
+  const svg=document.getElementById('strip'), x=y=>40+(y-2012)*(920/14);
+  let s=`<line x1="40" y1="40" x2="960" y2="40" stroke="var(--line)" stroke-width="2"/>`;
+  for(let y=2012;y<=2026;y+=2) s+=`<text x="${x(y)}" y="78" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="var(--muted)">${y}</text>`;
+  const spans=[[2012.5,2015.5],[2015.5,2019],[2019,2022.6],[2022.8,2026],[2026.1,2026.8]];
+  spans.forEach((sp,k)=>{ s+=`<rect x="${x(sp[0])}" y="36" width="${Math.max(6,x(sp[1])-x(sp[0])-6)}" height="8" rx="4" fill="var(--accent)" opacity="${.35+k*.15}"/>`; });
+  const order=[4,3,2,1,0];
+  spans.forEach((sp,k)=>{ const i=order[k]; s+=`<circle class="node" data-i="${i}" cx="${x(sp[0])}" cy="40" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3" style="cursor:pointer"><title>${jobs[i].co}</title></circle><text x="${x(sp[0])}" y="20" text-anchor="${k===4?'end':'start'}" font-family="IBM Plex Sans,sans-serif" font-size="12" font-weight="600" fill="var(--ink)">${jobs[i].co}</text>`; });
+  svg.innerHTML=s;
+  svg.querySelectorAll('.node').forEach(n=>n.addEventListener('click',()=>show(+n.dataset.i)));
+})();
+show(0);
+
+/* skills */
+const skills = [
+  ["Consulting","lead",["Solution Design","Cloud Migration","Requirement Analysis","Stakeholder Management","Architecture Reviews","HLD / LLD / BRD","Agile Delivery"]],
+  ["Backend","code",["Java 8–17","Spring Boot","Spring Cloud","Hibernate","REST APIs","Microservices"]],
+  ["Architecture","code",["Distributed Systems","Event-Driven","DDD","CQRS","API Gateway","High Availability","System Design"]],
+  ["Cloud & Platform","cloud",["AWS ECS","AWS EKS","Lambda","S3","RDS","IAM","CloudFormation","Azure","OpenShift / ROSA","Kubernetes","Helm","Docker"]],
+  ["DevOps & GitOps","cloud",["Argo CD","Argo Workflows","Jenkins","GitLab","GitHub","Terraform","Ansible","JFrog"]],
+  ["Data & Messaging","data",["PostgreSQL","MySQL","Oracle","MongoDB","Redis","Snowflake","Kafka","RabbitMQ"]],
+  ["Observability","cloud",["Splunk","CloudWatch","AWS X-Ray","Sentry","TDD / BDD","Performance Tuning"]],
+  ["AI Tools","ai",["GitHub Copilot","ChatGPT","Claude","AI Agents","Slack AI Automation","Document Search"]],
+  ["Frontend","code",["Angular","TypeScript","JavaScript","HTML5","CSS3","Responsive UI"]]
+];
+const cats=[["all","All"],["cloud","Cloud & DevOps"],["code","Engineering"],["data","Data"],["ai","AI"],["lead","Consulting"]];
+const grid=document.getElementById('skillgrid'), fl=document.getElementById('filters');
+grid.innerHTML=skills.map(([t,c,list])=>`<div class="sk" data-c="${c}"><h3>${t}</h3><div class="tags">${list.map(x=>`<span class="tag">${x}</span>`).join('')}</div></div>`).join('');
+cats.forEach(([k,l],i)=>{const b=document.createElement('button');b.className='chip-btn';b.id='f-'+k;b.textContent=l;b.setAttribute('aria-pressed',i===0);
+  b.onclick=()=>{fl.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));grid.querySelectorAll('.sk').forEach(s=>s.classList.toggle('dim',k!=='all'&&s.dataset.c!==k));};fl.appendChild(b);});
+
+/* reveal + counters (content is visible at rest; motion is an enhancement) */
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; e.target.classList.add('in');
+  e.target.querySelectorAll('[data-count]').forEach(n=>{ if(reduce||n.dataset.done) return; n.dataset.done=1;
+    const end=+n.dataset.count, dec=+(n.dataset.dec||0), t0=performance.now();
+    (function f(t){const p=Math.min(1,(t-t0)/1400), v=end*(1-Math.pow(1-p,3)); n.textContent=v.toFixed(dec); if(p<1) requestAnimationFrame(f);})(t0);
+  }); io.unobserve(e.target); }),{threshold:.2});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* nav highlight */
+const links=[...document.querySelectorAll('nav ul a')];
+(()=>{const o=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)); }),{rootMargin:'-45% 0px -50% 0px'});document.querySelectorAll('section[id]').forEach(s=>o.observe(s));})();
+
+/* email me form: sends through Web3Forms (https://web3forms.com) */
+(() => {
+  // 1) Get a free access key at https://web3forms.com using anuragmani.sonkar87@gmail.com
+  // 2) Paste it below in place of YOUR_ACCESS_KEY
+  const ACCESS_KEY = 'YOUR_ACCESS_KEY';
+  const $=id=>document.getElementById(id);
+  const form=$('mailform'), name=$('m-name'), from=$('m-from'), topic=$('m-topic'), msg=$('m-msg'), send=$('m-send'), note=$('m-note');
+  const valid=()=>{
+    let ok=true;
+    [[name,v=>v.trim()],[from,v=>/^\S+@\S+\.\S+$/.test(v.trim())],[msg,v=>v.trim().length>=10]].forEach(([el,t])=>{const g=!!t(el.value);el.classList.toggle('bad',!g);if(!g)ok=false;});
+    if(!ok){ note.classList.add('err'); note.textContent='Please add your name, a valid email and a message of at least 10 characters.'; }
+    return ok;
+  };
+  [name,from,msg].forEach(el=>el.addEventListener('input',()=>el.classList.remove('bad')));
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!valid()) return;
+    send.disabled=true; send.textContent='Sending...'; note.classList.remove('err'); note.textContent='';
+    try{
+      const res=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body:JSON.stringify({access_key:36b10a52-ab7d-4ac3-9efa-9f2317e44c86,subject:`Portfolio: ${topic.value} from ${name.value.trim()}`,from_name:'Portfolio website',
+          name:name.value.trim(),email:from.value.trim(),topic:topic.value,message:msg.value.trim()})});
+      const data=await res.json();
+      if(!data.success) throw new Error(data.message||'Send failed');
+      form.reset(); note.textContent='Thanks! Your message reached Anurag. He will reply soon.';
+    }catch(err){
+      note.classList.add('err'); note.textContent='Message could not be sent. Please email anuragmani.sonkar87@gmail.com directly.';
+    }finally{ send.disabled=false; send.textContent='Send message'; }
+  });
+})();
+
+/* copy */
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const el=document.getElementById(b.dataset.copy), txt=el.textContent;
+  const done=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1500);};
+  try{ navigator.clipboard.writeText(txt).then(done,()=>{sel(el);}); }catch(e){ sel(el); }
+  function sel(n){const r=document.createRange();r.selectNodeContents(n);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected';setTimeout(()=>b.textContent='Copy',1500);}
+}));
+</script>
+</body>
+</html>
