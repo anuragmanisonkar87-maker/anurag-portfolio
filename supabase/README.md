@@ -43,6 +43,24 @@ In **Razorpay Dashboard → Account & Settings → Webhooks → Add New Webhook*
 Make a test payment in Test Mode → check **Table Editor → payments**.
 Webhooks are set up separately for Test Mode and Live Mode, so add it again after going live.
 
+## 4. Admin login and role-based access (5 min)
+1. **Turn off public sign-up:** Authentication → Sign In / Providers → turn off **Allow new users to sign up**
+   (keep **Email** enabled). Only you can create logins.
+2. **Create your login:** Authentication → Users → **Add user → Create new user**
+   → your email + a strong password → tick **Auto Confirm User**.
+3. **Add the role rules:** SQL Editor → paste everything from [`roles.sql`](roles.sql) → **Run**.
+4. **Make yourself admin:** in SQL Editor run the `insert into public.user_roles ...` line from
+   step 4 at the bottom of `roles.sql` (remove the `--` in front first).
+
+| Who | contact_messages | payments | user_roles |
+|---|---|---|---|
+| Website visitor | add only | no access | no access |
+| Logged-in non-admin | no access | no access | read own role |
+| **Admin** | read, update, delete | read, update, delete | read own role |
+| Razorpay webhook | – | add / update | – |
+
+Roles can only be given or removed from the SQL Editor, never from the website or API.
+
 ## Viewing the data
 Use the Supabase **Table Editor**. Both tables are hidden from the public website.
 Amounts are stored in paise (`amount_paise`) and also shown in rupees (`amount_rupees`).
