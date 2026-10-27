@@ -479,11 +479,15 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 const links=[...document.querySelectorAll('nav ul a')];
 (()=>{const o=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)); }),{rootMargin:'-45% 0px -50% 0px'});document.querySelectorAll('section[id]').forEach(s=>o.observe(s));})();
 
-/* email me form: sends through Web3Forms (https://web3forms.com) */
+/* email me form: emails via Web3Forms (https://web3forms.com) and saves a copy in Supabase */
 (() => {
-  // 1) Get a free access key at https://web3forms.com using anuragmani.sonkar87@gmail.com
-  // 2) Paste it below in place of YOUR_ACCESS_KEY
   const ACCESS_KEY = '36b10a52-ab7d-4ac3-9efa-9f2317e44c86';
+  // Supabase: Dashboard -> Project Settings -> API. Paste the Project URL and the "anon public" key.
+  // The anon key is safe in the browser: the database only lets it ADD messages (see supabase/schema.sql).
+  // Leave as-is to skip saving to Supabase.
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const useDb = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
   const $=id=>document.getElementById(id);
   const form=$('mailform'), name=$('m-name'), from=$('m-from'), topic=$('m-topic'), msg=$('m-msg'), send=$('m-send'), note=$('m-note');
   const valid=()=>{
@@ -497,12 +501,24 @@ const links=[...document.querySelectorAll('nav ul a')];
     e.preventDefault();
     if(!valid()) return;
     send.disabled=true; send.textContent='Sending...'; note.classList.remove('err'); note.textContent='';
-    try{
+    const entry={name:name.value.trim(),email:from.value.trim(),topic:topic.value,message:msg.value.trim()};
+    const mail=async()=>{
       const res=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
-        body:JSON.stringify({access_key:ACCESS_KEY,subject:`Portfolio: ${topic.value} from ${name.value.trim()}`,from_name:'Portfolio website',
-          name:name.value.trim(),email:from.value.trim(),topic:topic.value,message:msg.value.trim()})});
+        body:JSON.stringify({access_key:ACCESS_KEY,subject:`Portfolio: ${entry.topic} from ${entry.name}`,from_name:'Portfolio website',...entry})});
       const data=await res.json();
       if(!data.success) throw new Error(data.message||'Send failed');
+    };
+    const save=async()=>{
+      if(!useDb) throw new Error('Supabase not configured');
+      const res=await fetch(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/contact_messages',{method:'POST',
+        headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY,Prefer:'return=minimal'},
+        body:JSON.stringify({...entry,page_url:location.href.slice(0,500)})});
+      if(!res.ok) throw new Error('DB save failed: '+res.status);
+    };
+    try{
+      const [m,d]=await Promise.allSettled([mail(),save()]);
+      if(useDb && d.status==='rejected') console.warn(d.reason);
+      if(m.status==='rejected' && d.status==='rejected') throw m.reason;
       form.reset(); note.textContent='Thanks! Your message reached Anurag. He will reply soon.';
     }catch(err){
       note.classList.add('err'); note.textContent='Message could not be sent. Please email anuragmani.sonkar87@gmail.com directly.';
